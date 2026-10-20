@@ -16,8 +16,7 @@ class LoanInput(BaseModel):
     person_emp_exp: float = Field(ge=0)
     person_home_ownership: Literal["RENT", "MORTGAGE", "OWN", "OTHER"]
     loan_amnt: float = Field(gt=0)
-    loan_intent: Literal["EDUCATION", "MEDICAL", "VENTURE", "PERSONAL",
-                         "DEBTCONSOLIDATION", "HOMEIMPROVEMENT"]
+    loan_intent: Literal["EDUCATION", "MEDICAL", "VENTURE", "PERSONAL", "DEBTCONSOLIDATION", "HOMEIMPROVEMENT"]
     loan_int_rate: float = Field(gt=0, le=40)
     cb_person_cred_hist_length: float = Field(ge=0)
     credit_score: float = Field(ge=300, le=850)
