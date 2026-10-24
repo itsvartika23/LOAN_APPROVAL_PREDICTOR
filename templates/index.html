@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LoanWise — Smart Loan Eligibility Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet" />
+  <style>
+    /* ================================================================
+       DESIGN TOKENS
+       ================================================================ */
+    :root {
+      --navy-900: #070F1B;
+      --navy-800: #0B1D35;
+      --navy-700: #102A4A;
+      --navy-600: #153760;
+      --navy-500: #1B4578;
+      --navy-400: #2A5F9E;
+      --ivory-50:  #FDFCF9;
+      --ivory-100: #FAF7F0;
+      --ivory-200: #F2EDE3;
+      --ivory-300: #E8E0D0;
+      --ivory-400: #D4C9B5;
+      --gold-600:  #A68B3E;
+      --gold-500:  #C5A55A;
+      --gold-400:  #D4B96E;
+      --gold-300:  #E2CD8A;
+      --gold-200:  #F0E4B8;
+      --text-dark:   #1A1A2E;
+      --text-body:   #3D4455;
+      --text-muted:  #6B7280;
+      --text-light:  #9CA3AF;
+      --success-600: #16A34A;
+      --success-500: #22C55E;
+      --success-100: #F0FDF4;
+      --danger-600:  #DC2626;
+      --danger-500:  #EF4444;
+      --danger-100:  #FEF2F2;
+      --white: #FFFFFF;
+      --radius-sm:  6px;
+      --radius-md:  12px;
+      --radius-lg:  20px;
+      --radius-xl:  28px;
+      --shadow-sm:  0 1px 3px rgba(11,29,53,.06), 0 1px 2px rgba(11,29,53,.04);
+      --shadow-md:  0 4px 14px rgba(11,29,53,.08), 0 2px 6px rgba(11,29,53,.04);
+      --shadow-lg:  0 12px 40px rgba(11,29,53,.12), 0 4px 12px rgba(11,29,53,.06);
+      --shadow-xl:  0 20px 60px rgba(11,29,53,.16), 0 8px 20px rgba(11,29,53,.08);
+      --font-sans:  'Inter', system-ui, -apple-system, sans-serif;
+      --font-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+      --transition: 0.3s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ================================================================
+       RESET & BASE
+       ================================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: var(--font-sans);
+      color: var(--text-body);
+      background: var(--ivory-50);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    img { max-width: 100%; display: block; }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; }
+    input, select, textarea { font-family: inherit; font-size: 1rem; }
+    ul { list-style: none; }
+    ::selection { background: var(--gold-300); color: var(--navy-800); }
+
+    /* ================================================================
+       TYPOGRAPHY
+       ================================================================ */
+    h1, h2, h3, h4 { font-family: var(--font-serif); color: var(--navy-800); line-height: 1.25; }
+    h1 { font-size: clamp(2.2rem, 5vw, 3.6rem); font-weight: 600; letter-spacing: -0.02em; }
+    h2 { font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 600; }
+    h3 { font-size: clamp(1.15rem, 2vw, 1.4rem); font-weight: 600; }
+    h4 { font-size: 1.05rem; font-weight: 600; }
+    .section-label {
+      display: inline-block;
+      font-family: var(--font-sans);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-500);
+      margin-bottom: 0.75rem;
+    }
+    .section-subtitle {
+      max-width: 620px;
+      margin: 0.75rem auto 0;
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      line-height: 1.75;
+    }
+
+    /* ================================================================
+       LAYOUT
+       ================================================================ */
+    .container {
+      width: 100%;
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ================================================================
+       BUTTONS
+       ================================================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.85rem 2rem;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 0.95rem;
+      letter-spacing: 0.01em;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold-500), var(--gold-400));
+      color: var(--navy-900);
+      box-shadow: 0 4px 16px rgba(197,165,90,.35);
+    }
+    .btn-gold:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(197,165,90,.45);
+      background: linear-gradient(135deg, var(--gold-400), var(--gold-300));
+    }
+    .btn-gold:active { transform: translateY(0); }
+    .btn-navy {
+      background: var(--navy-800);
+      color: var(--ivory-100);
+    }
+    .btn-navy:hover {
+      background: var(--navy-700);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+    .btn-outline {
+      border: 1.5px solid var(--ivory-300);
+      color: var(--navy-800);
+      background: var(--white);
+    }
+    .btn-outline:hover {
+      border-color: var(--gold-500);
+      color: var(--gold-600);
+      background: rgba(197,165,90,.06);
+    }
+    .btn-sm { padding: 0.6rem 1.4rem; font-size: 0.88rem; }
+    .btn-lg { padding: 1rem 2.5rem; font-size: 1.05rem; border-radius: var(--radius-lg); }
+
+    /* ================================================================
+       NAVIGATION
+       ================================================================ */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1000;
+      padding: 1rem 0;
+      transition: all var(--transition);
+    }
+    .navbar.scrolled {
+      background: rgba(7,15,27,.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 0.7rem 0;
+      box-shadow: 0 2px 20px rgba(0,0,0,.15);
+    }
+    .navbar-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .navbar-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      color: var(--ivory-100);
+      font-family: var(--font-serif);
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .navbar-logo .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--gold-500), var(--gold-300));
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      color: var(--navy-900);
+      font-weight: 700;
+    }
+    .navbar-links {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+    .navbar-links a {
+      color: rgba(250,247,240,.75);
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color var(--transition);
+      position: relative;
+    }
+    .navbar-links a:hover,
+    .navbar-links a.active { color: var(--gold-400); }
+    .navbar-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px; left: 0;
+      width: 0; height: 2px;
+      background: var(--gold-400);
+      transition: width var(--transition);
+    }
+    .navbar-links a:hover::after,
+    .navbar-links a.active::after { width: 100%; }
+    .navbar-cta {
+      padding: 0.55rem 1.3rem;
+      border-radius: var(--radius-sm);
+      background: rgba(197,165,90,.15);
+      border: 1px solid rgba(197,165,90,.3);
+      color: var(--gold-400) !important;
+      font-weight: 600;
+    }
+    .navbar-cta:hover {
+      background: rgba(197,165,90,.25) !important;
+    }
+    .navbar-cta::after { display: none !important; }
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      background: none;
+      border: none;
+      padding: 4px;
+    }
+    .hamburger span {
+      display: block;
+      width: 24px; height: 2px;
+      background: var(--ivory-100);
+      border-radius: 2px;
+      transition: all var(--transition);
+    }
+
+    /* ================================================================
+       SCREEN MANAGEMENT
+       ================================================================ */
+    .screen {
+      display: none;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .screen.active {
+      display: block;
+      opacity: 1;
+    }
+    .screen.fade-in {
+      animation: screenFadeIn 0.5s ease forwards;
+    }
+
+    /* ================================================================
+       HERO SECTION
+       ================================================================ */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      background: linear-gradient(160deg, var(--navy-900) 0%, var(--navy-800) 40%, var(--navy-700) 100%);
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -20%; right: -10%;
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(197,165,90,.08) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -30%; left: -15%;
+      width: 800px; height: 800px;
+      background: radial-gradient(circle, rgba(27,69,120,.2) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(197,165,90,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(197,165,90,.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 720px;
+      padding: 8rem 0 6rem;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.45rem 1rem;
+      background: rgba(197,165,90,.1);
+      border: 1px solid rgba(197,165,90,.2);
+      border-radius: 50px;
+      color: var(--gold-400);
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      margin-bottom: 1.75rem;
+      animation: fadeSlideUp 0.8s ease forwards;
+    }
+    .hero-badge .dot {
+      width: 7px; height: 7px;
+      background: var(--gold-400);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .hero h1 {
+      color: var(--ivory-100);
+      margin-bottom: 1.5rem;
+      animation: fadeSlideUp 0.8s 0.15s ease both;
+    }
+    .hero h1 .gold { color: var(--gold-400); }
+    .hero-subtitle {
+      color: rgba(250,247,240,.6);
+      font-size: 1.15rem;
+      line-height: 1.8;
+      max-width: 560px;
+      margin-bottom: 2.5rem;
+      animation: fadeSlideUp 0.8s 0.3s ease both;
+    }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      animation: fadeSlideUp 0.8s 0.45s ease both;
+    }
+    .hero-stats {
+      display: flex;
+      gap: 3rem;
+      margin-top: 4rem;
+      padding-top: 2.5rem;
+      border-top: 1px solid rgba(250,247,240,.08);
+      animation: fadeSlideUp 0.8s 0.6s ease both;
+    }
+    .hero-stat-value {
+      font-family: var(--font-serif);
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--gold-400);
+    }
+    .hero-stat-label {
+      font-size: 0.82rem;
+      color: rgba(250,247,240,.45);
+      margin-top: 0.25rem;
+      font-weight: 500;
+    }
+    .hero-decoration {
+      position: absolute;
+      right: 5%;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 380px;
+      height: 380px;
+      z-index: 1;
+      opacity: 0.12;
+    }
+    .hero-decoration .ring {
+      position: absolute;
+      border: 1.5px solid var(--gold-500);
+      border-radius: 50%;
+      animation: spinSlow 25s linear infinite;
+    }
+    .hero-decoration .ring:nth-child(1) {
+      width: 100%; height: 100%;
+      top: 0; left: 0;
+    }
+    .hero-decoration .ring:nth-child(2) {
+      width: 75%; height: 75%;
+      top: 12.5%; left: 12.5%;
+      animation-direction: reverse;
+      animation-duration: 20s;
+    }
+    .hero-decoration .ring:nth-child(3) {
+      width: 50%; height: 50%;
+      top: 25%; left: 25%;
+      animation-duration: 15s;
+    }
+
+    /* ================================================================
+       SHARED SECTION STYLES
+       ================================================================ */
+    .section {
+      padding: 5.5rem 0;
+    }
+    .section-dark {
+      background: linear-gradient(180deg, var(--navy-900), var(--navy-800));
+      color: var(--ivory-200);
+    }
+    .section-alt {
+      background: var(--ivory-100);
+    }
+    .section-header {
+      text-align: center;
+      margin-bottom: 3.5rem;
+    }
+
+    /* ================================================================
+       WHY IT MATTERS
+       ================================================================ */
+    .factors-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+    .factor-card {
+      background: var(--white);
+      border: 1px solid var(--ivory-200);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      transition: all var(--transition);
+    }
+    .factor-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--gold-300);
+    }
+    .factor-icon {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, rgba(197,165,90,.1), rgba(197,165,90,.05));
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+      font-size: 1.3rem;
+    }
+    .factor-card h4 {
+      margin-bottom: 0.5rem;
+      font-family: var(--font-sans);
+      font-weight: 600;
+    }
+    .factor-card p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+
+    /* ================================================================
+       HOW IT WORKS
+       ================================================================ */
+    .steps-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 2rem;
+      position: relative;
+    }
+    .steps-row::before {
+      content: '';
+      position: absolute;
+      top: 44px;
+      left: calc(16.66% + 28px);
+      right: calc(16.66% + 28px);
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold-500), var(--gold-300), var(--gold-500));
+      opacity: 0.3;
+    }
+    .step-card {
+      flex: 1;
+      text-align: center;
+      position: relative;
+    }
+    .step-number {
+      width: 56px; height: 56px;
+      margin: 0 auto 1.5rem;
+      background: linear-gradient(135deg, var(--gold-500), var(--gold-400));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-serif);
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--navy-900);
+      position: relative;
+      z-index: 2;
+      box-shadow: 0 4px 16px rgba(197,165,90,.3);
+    }
+    .step-card h3 { margin-bottom: 0.6rem; }
+    .step-card p {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      max-width: 280px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+    .step-icon {
+      display: block;
+      margin: 0 auto 0.75rem;
+      width: 40px; height: 40px;
+      opacity: 0.5;
+    }
+
+    /* ================================================================
+       QUOTES SECTION
+       ================================================================ */
+    .quotes-section {
+      background: linear-gradient(160deg, var(--navy-900), var(--navy-800));
+      padding: 5rem 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .quotes-section::before {
+      content: '';
+      position: absolute;
+      top: -50%; right: -20%;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(197,165,90,.06) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    .quotes-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2rem;
+      position: relative;
+      z-index: 1;
+    }
+    .quote-card {
+      background: rgba(250,247,240,.04);
+      border: 1px solid rgba(250,247,240,.08);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      transition: all var(--transition);
+    }
+    .quote-card:hover {
+      background: rgba(250,247,240,.07);
+      border-color: rgba(197,165,90,.2);
+    }
+    .quote-mark {
+      font-family: var(--font-serif);
+      font-size: 3.5rem;
+      line-height: 1;
+      color: var(--gold-500);
+      opacity: 0.5;
+      margin-bottom: 0.5rem;
+    }
+    .quote-text {
+      font-family: var(--font-serif);
+      font-size: 1.15rem;
+      font-style: italic;
+      color: rgba(250,247,240,.8);
+      line-height: 1.7;
+      margin-bottom: 1.25rem;
+    }
+    .quote-author {
+      font-size: 0.85rem;
+      color: var(--gold-400);
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    /* ================================================================
+       BENEFITS
+       ================================================================ */
+    .benefits-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+    }
+    .benefit-card {
+      background: var(--white);
+      border: 1px solid var(--ivory-200);
+      border-radius: var(--radius-lg);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      transition: all var(--transition);
+    }
+    .benefit-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--gold-300);
+    }
+    .benefit-icon {
+      width: 56px; height: 56px;
+      margin: 0 auto 1.25rem;
+      background: linear-gradient(135deg, rgba(197,165,90,.12), rgba(197,165,90,.04));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .benefit-card h4 {
+      font-family: var(--font-sans);
+      margin-bottom: 0.5rem;
+    }
+    .benefit-card p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+
+    /* ================================================================
+       TIPS SECTION
+       ================================================================ */
+    .tips-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.25rem;
+    }
+    .tip-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      background: var(--white);
+      border: 1px solid var(--ivory-200);
+      border-radius: var(--radius-md);
+      padding: 1.4rem 1.5rem;
+      transition: all var(--transition);
+    }
+    .tip-item:hover {
+      border-color: var(--gold-300);
+      box-shadow: var(--shadow-sm);
+    }
+    .tip-num {
+      flex-shrink: 0;
+      width: 32px; height: 32px;
+      background: var(--navy-800);
+      color: var(--gold-400);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+    .tip-item p {
+      font-size: 0.92rem;
+      color: var(--text-body);
+      line-height: 1.65;
+    }
+    .tip-item strong {
+      color: var(--navy-800);
+    }
+
+    /* ================================================================
+       FOOTER
+       ================================================================ */
+    .footer {
+      background: var(--navy-900);
+      color: rgba(250,247,240,.5);
+      padding: 3.5rem 0 2rem;
+    }
+    .footer-inner {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 2rem;
+      flex-wrap: wrap;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid rgba(250,247,240,.08);
+    }
+    .footer-brand {
+      max-width: 320px;
+    }
+    .footer-brand .navbar-logo {
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+    }
+    .footer-brand p {
+      font-size: 0.85rem;
+      line-height: 1.7;
+    }
+    .footer-links h4 {
+      color: var(--ivory-200);
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .footer-links a {
+      display: block;
+      font-size: 0.88rem;
+      padding: 0.3rem 0;
+      transition: color var(--transition);
+    }
+    .footer-links a:hover { color: var(--gold-400); }
+    .footer-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding-top: 1.5rem;
+      font-size: 0.8rem;
+    }
+    .footer-disclaimer {
+      max-width: 700px;
+      font-size: 0.78rem;
+      line-height: 1.7;
+      color: rgba(250,247,240,.35);
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(250,247,240,.06);
+    }
+
+    /* ================================================================
+       APPLICATION FORM
+       ================================================================ */
+    .app-screen {
+      min-height: 100vh;
+      background: linear-gradient(180deg, var(--navy-900) 0%, var(--navy-800) 280px, var(--ivory-50) 280px);
+      padding: 7rem 0 4rem;
+    }
+    .form-header {
+      text-align: center;
+      padding-bottom: 2.5rem;
+    }
+    .form-header h2 { color: var(--ivory-100); margin-bottom: 0.5rem; }
+    .form-header p { color: rgba(250,247,240,.55); font-size: 1rem; }
+    .form-wrapper {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+    .progress-bar {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+    .progress-step {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-light);
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+      background: var(--white);
+      border: 1px solid var(--ivory-200);
+      transition: all var(--transition);
+    }
+    .progress-step .step-dot {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--ivory-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      transition: all var(--transition);
+    }
+    .progress-step.active {
+      color: var(--navy-800);
+      border-color: var(--gold-400);
+      background: rgba(197,165,90,.06);
+    }
+    .progress-step.active .step-dot {
+      background: var(--gold-500);
+      color: var(--navy-900);
+    }
+    .progress-step.completed .step-dot {
+      background: var(--success-500);
+      color: var(--white);
+    }
+    .form-card {
+      background: var(--white);
+      border: 1px solid var(--ivory-200);
+      border-radius: var(--radius-xl);
+      padding: 2.5rem;
+      box-shadow: var(--shadow-lg);
+    }
+    .form-section {
+      margin-bottom: 2.5rem;
+    }
+    .form-section:last-child { margin-bottom: 0; }
+    .form-section-title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: var(--font-sans);
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--navy-800);
+      padding-bottom: 1rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid var(--ivory-200);
+      letter-spacing: 0.01em;
+    }
+    .form-section-title .sec-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--navy-800), var(--navy-700));
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      color: var(--gold-400);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .form-row:last-child { margin-bottom: 0; }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--navy-800);
+      margin-bottom: 0.4rem;
+    }
+    .form-group label .required {
+      color: var(--danger-500);
+      margin-left: 2px;
+    }
+    .form-group .field-hint {
+      font-size: 0.78rem;
+      color: var(--text-light);
+      margin-bottom: 0.4rem;
+      line-height: 1.45;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1.5px solid var(--ivory-300);
+      border-radius: var(--radius-sm);
+      background: var(--ivory-50);
+      color: var(--text-dark);
+      transition: all var(--transition);
+      outline: none;
+    }
+    .form-group input::placeholder { color: var(--text-light); }
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--gold-500);
+      box-shadow: 0 0 0 3px rgba(197,165,90,.12);
+      background: var(--white);
+    }
+    .form-group input.error,
+    .form-group select.error {
+      border-color: var(--danger-500);
+      box-shadow: 0 0 0 3px rgba(239,68,68,.1);
+    }
+    .form-group .field-error {
+      font-size: 0.78rem;
+      color: var(--danger-500);
+      margin-top: 0.35rem;
+      display: none;
+    }
+    .form-group .field-error.visible { display: block; }
+    .form-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--ivory-200);
+    }
+
+    /* ================================================================
+       RESULTS SCREEN
+       ================================================================ */
+    .results-screen {
+      min-height: 100vh;
+      background: linear-gradient(180deg, var(--navy-900) 0%, var(--navy-800) 320px, var(--ivory-50) 320px);
+      padding: 7rem 0 4rem;
+    }
+    .results-header {
+      text-align: center;
+      padding-bottom: 2.5rem;
+    }
+    .results-header h2 { color: var(--ivory-100); }
+    .results-header p { color: rgba(250,247,240,.55); margin-top: 0.5rem; font-size: 1rem; }
+    .results-wrapper {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .results-card {
+      background: var(--white);
+      border-radius: var(--radius-xl);
+      padding: 3rem;
+      box-shadow: var(--shadow-xl);
+      text-align: center;
+      border: 1px solid var(--ivory-200);
+    }
+    /* Gauge */
+    .gauge-container {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      margin: 0 auto 2rem;
+    }
+    .gauge-svg {
+      transform: rotate(-90deg);
+      width: 200px;
+      height: 200px;
+    }
+    .gauge-bg {
+      fill: none;
+      stroke: var(--ivory-200);
+      stroke-width: 10;
+    }
+    .gauge-fill {
+      fill: none;
+      stroke-width: 10;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1.5s cubic-bezier(.4,0,.2,1), stroke 0.5s ease;
+    }
+    .gauge-value {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .gauge-percent {
+      font-family: var(--font-serif);
+      font-size: 2.8rem;
+      font-weight: 700;
+      color: var(--navy-800);
+      line-height: 1;
+    }
+    .gauge-percent-sign {
+      font-size: 1.4rem;
+      color: var(--text-muted);
+    }
+    .gauge-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-top: 4px;
+      letter-spacing: 0.03em;
+    }
+    /* Status Badge */
+    .result-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.7rem 1.6rem;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 1.25rem;
+      letter-spacing: 0.02em;
+    }
+    .result-status.approved {
+      background: var(--success-100);
+      color: var(--success-600);
+      border: 1.5px solid rgba(34,197,94,.2);
+    }
+    .result-status.rejected {
+      background: var(--danger-100);
+      color: var(--danger-600);
+      border: 1.5px solid rgba(239,68,68,.2);
+    }
+    .result-status .status-icon { font-size: 1.2rem; }
+    .result-message {
+      font-size: 0.95rem;
+      color: var(--text-body);
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+      max-width: 440px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .result-disclaimer {
+      background: var(--ivory-100);
+      border: 1px solid var(--ivory-200);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+      margin-bottom: 2rem;
+      text-align: left;
+    }
+    .result-disclaimer strong {
+      color: var(--navy-800);
+    }
+    .result-actions {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    /* ================================================================
+       LOADING OVERLAY
+       ================================================================ */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(7,15,27,.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .loading-overlay.active { display: flex; }
+    .spinner {
+      width: 52px; height: 52px;
+      border: 4px solid rgba(197,165,90,.2);
+      border-top-color: var(--gold-400);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    .loading-text {
+      color: var(--ivory-200);
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    /* ================================================================
+       ERROR TOAST
+       ================================================================ */
+    .error-toast {
+      position: fixed;
+      top: 5rem; right: 1.5rem;
+      max-width: 420px;
+      background: var(--white);
+      border: 1px solid rgba(239,68,68,.2);
+      border-left: 4px solid var(--danger-500);
+      border-radius: var(--radius-md);
+      padding: 1.25rem 1.5rem;
+      box-shadow: var(--shadow-lg);
+      z-index: 10000;
+      transform: translateX(120%);
+      transition: transform 0.4s cubic-bezier(.4,0,.2,1);
+    }
+    .error-toast.visible { transform: translateX(0); }
+    .error-toast-title {
+      font-weight: 700;
+      color: var(--danger-600);
+      font-size: 0.9rem;
+      margin-bottom: 0.3rem;
+    }
+    .error-toast-message {
+      font-size: 0.85rem;
+      color: var(--text-body);
+      line-height: 1.55;
+    }
+    .error-toast-close {
+      position: absolute;
+      top: 0.75rem; right: 0.75rem;
+      font-size: 1.1rem;
+      color: var(--text-light);
+      cursor: pointer;
+      padding: 4px;
+    }
+    .error-toast-close:hover { color: var(--text-body); }
+
+    /* ================================================================
+       ANIMATIONS
+       ================================================================ */
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes screenFadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes spinSlow {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.4; }
+    }
+    @keyframes countUp {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    /* ================================================================
+       RESPONSIVE
+       ================================================================ */
+    @media (max-width: 1024px) {
+      .factors-grid { grid-template-columns: repeat(2, 1fr); }
+      .benefits-grid { grid-template-columns: repeat(2, 1fr); }
+      .hero-decoration { display: none; }
+    }
+    @media (max-width: 768px) {
+      .hamburger { display: flex; }
+      .navbar-links {
+        display: none;
+        position: absolute;
+        top: 100%; left: 0; right: 0;
+        background: rgba(7,15,27,.97);
+        backdrop-filter: blur(16px);
+        flex-direction: column;
+        padding: 1.5rem;
+        gap: 0.75rem;
+        border-bottom: 1px solid rgba(250,247,240,.08);
+      }
+      .navbar-links.open { display: flex; }
+      .navbar-links a { padding: 0.6rem 0; font-size: 1rem; }
+      .factors-grid,
+      .quotes-grid,
+      .tips-grid { grid-template-columns: 1fr; }
+      .benefits-grid { grid-template-columns: repeat(2, 1fr); }
+      .steps-row {
+        flex-direction: column;
+        align-items: center;
+        gap: 2.5rem;
+      }
+      .steps-row::before { display: none; }
+      .form-row { grid-template-columns: 1fr; }
+      .form-card { padding: 1.5rem; }
+      .results-card { padding: 2rem 1.5rem; }
+      .hero-stats { gap: 1.5rem; flex-wrap: wrap; }
+      .progress-bar { flex-wrap: wrap; justify-content: center; }
+      .form-actions {
+        flex-direction: column-reverse;
+      }
+      .form-actions .btn { width: 100%; }
+      .hero-content { padding: 7rem 0 4rem; }
+      .section { padding: 3.5rem 0; }
+      .footer-inner { flex-direction: column; gap: 2rem; }
+    }
+    @media (max-width: 480px) {
+      .benefits-grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 1.9rem; }
+      .hero-stats { flex-direction: column; gap: 1rem; }
+      .btn-lg { padding: 0.85rem 1.8rem; font-size: 0.95rem; }
+      .progress-step span.step-text { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       NAVIGATION
+       ============================================================ -->
+  <nav class="navbar" id="navbar" role="navigation" aria-label="Main navigation">
+    <div class="container">
+      <div class="navbar-inner">
+        <a href="#" class="navbar-logo" onclick="showScreen('home'); return false;" aria-label="LoanWise Home">
+          <span class="logo-icon" aria-hidden="true">LW</span>
+          LoanWise
+        </a>
+        <button class="hamburger" id="hamburger" aria-label="Toggle navigation menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="navbar-links" id="navLinks" role="menubar">
+          <a href="#hero" role="menuitem" onclick="scrollToSection('hero')">Home</a>
+          <a href="#how-it-works" role="menuitem" onclick="scrollToSection('how-it-works')">How It Works</a>
+          <a href="#benefits" role="menuitem" onclick="scrollToSection('benefits')">Benefits</a>
+          <a href="#" role="menuitem" class="navbar-cta" onclick="showScreen('application'); return false;">Apply Now</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============================================================
+       LOADING OVERLAY
+       ============================================================ -->
+  <div class="loading-overlay" id="loadingOverlay" role="alert" aria-live="assertive">
+    <div class="spinner" aria-hidden="true"></div>
+    <p class="loading-text">Analyzing your profile&hellip;</p>
+  </div>
+
+  <!-- ============================================================
+       ERROR TOAST
+       ============================================================ -->
+  <div class="error-toast" id="errorToast" role="alert" aria-live="assertive">
+    <button class="error-toast-close" onclick="hideError()" aria-label="Dismiss error">&times;</button>
+    <div class="error-toast-title">Something went wrong</div>
+    <div class="error-toast-message" id="errorMessage">Please try again.</div>
+  </div>
+
+  <main>
+    <!-- ==========================================================
+         SCREEN 1: HOME
+         ========================================================== -->
+    <div class="screen active" id="screen-home">
+
+      <!-- HERO -->
+      <section class="hero" id="hero">
+        <div class="hero-grid" aria-hidden="true"></div>
+        <div class="hero-decoration" aria-hidden="true">
+          <div class="ring"></div>
+          <div class="ring"></div>
+          <div class="ring"></div>
+        </div>
+        <div class="container">
+          <div class="hero-content">
+            <div class="hero-badge">
+              <span class="dot" aria-hidden="true"></span>
+              ML-Powered Eligibility Estimation
+            </div>
+            <h1>Make Smarter Decisions About Your <span class="gold">Financial Future.</span></h1>
+            <p class="hero-subtitle">
+              LoanWise uses machine learning to provide an estimated loan approval prediction
+              based on your applicant information &mdash; helping you understand where you stand
+              before you apply.
+            </p>
+            <div class="hero-actions">
+              <button class="btn btn-gold btn-lg" onclick="showScreen('application')">
+                Check Your Eligibility
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h12M12 5l7 7-7 7"/></svg>
+              </button>
+              <a href="#how-it-works" class="btn btn-outline btn-lg" style="border-color: rgba(250,247,240,.15); color: var(--ivory-200); background: rgba(250,247,240,.04);" onclick="scrollToSection('how-it-works'); return false;">
+                Learn More
+              </a>
+            </div>
+            <div class="hero-stats">
+              <div>
+                <div class="hero-stat-value">12</div>
+                <div class="hero-stat-label">Key Factors Analyzed</div>
+              </div>
+              <div>
+                <div class="hero-stat-value">Instant</div>
+                <div class="hero-stat-label">Prediction Results</div>
+              </div>
+              <div>
+                <div class="hero-stat-value">100%</div>
+                <div class="hero-stat-label">Free &amp; Confidential</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- WHY IT MATTERS -->
+      <section class="section" id="why-matters">
+        <div class="container">
+          <div class="section-header">
+            <div class="section-label">Understanding Eligibility</div>
+            <h2>Why Loan Eligibility Matters</h2>
+            <p class="section-subtitle">
+              Lenders evaluate multiple factors when assessing a loan application.
+              Understanding these factors helps you prepare a stronger profile and
+              make informed borrowing decisions.
+            </p>
+          </div>
+          <div class="factors-grid">
+            <div class="factor-card">
+              <div class="factor-icon" aria-hidden="true">💰</div>
+              <h4>Income &amp; Stability</h4>
+              <p>Your annual income and employment history demonstrate your ability to make consistent repayments over the loan term.</p>
+            </div>
+            <div class="factor-card">
+              <div class="factor-icon" aria-hidden="true">📊</div>
+              <h4>Credit Score</h4>
+              <p>A strong credit score reflects responsible credit use and signals to lenders that you are a lower-risk borrower.</p>
+            </div>
+            <div class="factor-card">
+              <div class="factor-icon" aria-hidden="true">🏠</div>
+              <h4>Home Ownership</h4>
+              <p>Whether you rent, own, or have a mortgage provides lenders with insight into your financial stability and assets.</p>
+            </div>
+            <div class="factor-card">
+              <div class="factor-icon" aria-hidden="true">📉</div>
+              <h4>Debt-to-Income Ratio</h4>
+              <p>The ratio of your loan amount to income helps lenders gauge whether the requested amount is manageable for you.</p>
+            </div>
+            <div class="factor-card">
+              <div class="factor-icon" aria-hidden="true">📅</div>
+              <h4>Credit History Length</h4>
+              <p>A longer credit history gives lenders more data to assess your repayment patterns and financial behaviour over time.</p>
+            </div>
+            <div class="factor-card">
+              <div class="factor-icon" aria-hidden="true">⚠️</div>
+              <h4>Past Defaults</h4>
+              <p>Any previous loan defaults significantly affect eligibility, as they indicate higher risk to potential lenders.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- HOW IT WORKS -->
+      <section class="section section-alt" id="how-it-works">
+        <div class="container">
+          <div class="section-header">
+            <div class="section-label">Simple Process</div>
+            <h2>How It Works</h2>
+            <p class="section-subtitle">
+              Get an estimated eligibility prediction in three easy steps &mdash;
+              no impact on your credit score, no commitments.
+            </p>
+          </div>
+          <div class="steps-row">
+            <div class="step-card">
+              <div class="step-number">1</div>
+              <h3>Enter Your Details</h3>
+              <p>Fill in your personal, employment, and loan information through our secure application form.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-number">2</div>
+              <h3>Analyze Your Profile</h3>
+              <p>Our machine learning model evaluates the key factors that lenders commonly consider in their decisions.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-number">3</div>
+              <h3>View Your Prediction</h3>
+              <p>Receive an instant estimated prediction with a probability score to help you understand your standing.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- QUOTES -->
+      <section class="quotes-section" id="quotes">
+        <div class="container">
+          <div class="section-header">
+            <div class="section-label" style="color: var(--gold-400);">Words of Wisdom</div>
+            <h2 style="color: var(--ivory-100);">Financial Inspiration</h2>
+          </div>
+          <div class="quotes-grid">
+            <div class="quote-card">
+              <div class="quote-mark" aria-hidden="true">&ldquo;</div>
+              <p class="quote-text">An investment in knowledge pays the best interest.</p>
+              <div class="quote-author">&mdash; Benjamin Franklin</div>
+            </div>
+            <div class="quote-card">
+              <div class="quote-mark" aria-hidden="true">&ldquo;</div>
+              <p class="quote-text">Do not save what is left after spending, but spend what is left after saving.</p>
+              <div class="quote-author">&mdash; Warren Buffett</div>
+            </div>
+            <div class="quote-card">
+              <div class="quote-mark" aria-hidden="true">&ldquo;</div>
+              <p class="quote-text">Understanding your financial position today is the first step to building the future you deserve.</p>
+              <div class="quote-author">&mdash; LoanWise</div>
+            </div>
+            <div class="quote-card">
+              <div class="quote-mark" aria-hidden="true">&ldquo;</div>
+              <p class="quote-text">Every smart financial decision begins with asking the right questions and seeking the right information.</p>
+              <div class="quote-author">&mdash; LoanWise</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BENEFITS -->
+      <section class="section" id="benefits">
+        <div class="container">
+          <div class="section-header">
+            <div class="section-label">Why LoanWise</div>
+            <h2>Benefits of Using Our Tool</h2>
+            <p class="section-subtitle">
+              LoanWise is designed to empower you with insights &mdash; not to replace
+              professional financial advice.
+            </p>
+          </div>
+          <div class="benefits-grid">
+            <div class="benefit-card">
+              <div class="benefit-icon" aria-hidden="true">⚡</div>
+              <h4>Instant Results</h4>
+              <p>Get your estimated eligibility prediction in seconds, not days.</p>
+            </div>
+            <div class="benefit-card">
+              <div class="benefit-icon" aria-hidden="true">🔒</div>
+              <h4>Privacy Focused</h4>
+              <p>Your data is processed in real-time and never stored or shared with third parties.</p>
+            </div>
+            <div class="benefit-card">
+              <div class="benefit-icon" aria-hidden="true">🧠</div>
+              <h4>Data-Driven Insights</h4>
+              <p>Powered by machine learning trained on historical lending patterns.</p>
+            </div>
+            <div class="benefit-card">
+              <div class="benefit-icon" aria-hidden="true">🎯</div>
+              <h4>No Credit Impact</h4>
+              <p>Checking your eligibility here has zero effect on your actual credit score.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RESPONSIBLE BORROWING TIPS -->
+      <section class="section section-alt" id="tips">
+        <div class="container">
+          <div class="section-header">
+            <div class="section-label">Smart Borrowing</div>
+            <h2>Responsible Borrowing Tips</h2>
+            <p class="section-subtitle">
+              Before taking on any debt, consider these principles to protect your financial well-being.
+            </p>
+          </div>
+          <div class="tips-grid">
+            <div class="tip-item">
+              <span class="tip-num" aria-hidden="true">1</span>
+              <p><strong>Borrow only what you need</strong> and can comfortably repay. Avoid overextending your monthly budget with loan obligations.</p>
+            </div>
+            <div class="tip-item">
+              <span class="tip-num" aria-hidden="true">2</span>
+              <p><strong>Review your credit report regularly</strong> for accuracy. Errors on your report can unfairly lower your score and limit your options.</p>
+            </div>
+            <div class="tip-item">
+              <span class="tip-num" aria-hidden="true">3</span>
+              <p><strong>Compare offers from multiple lenders</strong> before committing. Interest rates and terms can vary significantly across providers.</p>
+            </div>
+            <div class="tip-item">
+              <span class="tip-num" aria-hidden="true">4</span>
+              <p><strong>Consider the total cost of the loan,</strong> not just the monthly payment. Factor in interest paid over the entire loan term.</p>
+            </div>
+            <div class="tip-item">
+              <span class="tip-num" aria-hidden="true">5</span>
+              <p><strong>Build an emergency fund</strong> before taking on debt. Unexpected expenses should not force you into missed payments.</p>
+            </div>
+            <div class="tip-item">
+              <span class="tip-num" aria-hidden="true">6</span>
+              <p><strong>Understand all terms and conditions.</strong> Read the fine print on fees, penalties, and variable rate clauses before signing.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTA BANNER -->
+      <section class="section" style="text-align:center; padding: 5rem 0;">
+        <div class="container">
+          <div class="section-label">Ready to Get Started?</div>
+          <h2 style="margin-bottom: 1rem;">Check Your Loan Eligibility Today</h2>
+          <p class="section-subtitle" style="margin-bottom: 2rem;">
+            It takes less than two minutes. No sign-up required, and your information is never stored.
+          </p>
+          <button class="btn btn-gold btn-lg" onclick="showScreen('application')">
+            Start Your Application
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h12M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </section>
+
+    </div><!-- end screen-home -->
+
+    <!-- ==========================================================
+         SCREEN 2: APPLICATION FORM
+         ========================================================== -->
+    <div class="screen" id="screen-application">
+      <div class="app-screen">
+        <div class="container">
+
+          <div class="form-header">
+            <div class="section-label" style="color: var(--gold-400);">Loan Application</div>
+            <h2>Tell Us About Yourself</h2>
+            <p>Complete the form below to receive your estimated eligibility prediction.</p>
+          </div>
+
+          <div class="form-wrapper">
+            <!-- Progress -->
+            <div class="progress-bar" role="list" aria-label="Form sections">
+              <div class="progress-step active" role="listitem">
+                <span class="step-dot">1</span>
+                <span class="step-text">Personal Info</span>
+              </div>
+              <div class="progress-step active" role="listitem">
+                <span class="step-dot">2</span>
+                <span class="step-text">Employment &amp; Income</span>
+              </div>
+              <div class="progress-step active" role="listitem">
+                <span class="step-dot">3</span>
+                <span class="step-text">Loan &amp; Credit</span>
+              </div>
+            </div>
+
+            <div class="form-card">
+              <form id="loanForm" novalidate>
+
+                <!-- Section 1: Personal Information -->
+                <div class="form-section">
+                  <div class="form-section-title">
+                    <span class="sec-icon" aria-hidden="true">👤</span>
+                    Personal Information
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="person_age">Age <span class="required" aria-label="required">*</span></label>
+                      <div class="field-hint">Between 18 and 100 years</div>
+                      <input type="number" id="person_age" name="person_age" min="18" max="100" step="1" placeholder="e.g. 28" required aria-required="true" />
+                      <div class="field-error" id="err-person_age">Please enter a valid age (18–100).</div>
+                    </div>
+                    <div class="form-group">
+                      <label for="person_gender">Gender <span class="required" aria-label="required">*</span></label>
+                      <div class="field-hint">Biological gender for model input</div>
+                      <select id="person_gender" name="person_gender" required aria-required="true">
+                        <option value="" disabled selected>Select gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                      </select>
+                      <div class="field-error" id="err-person_gender">Please select a gender.</div>
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="person_education">Education Level <span class="required" aria-label="required">*</span></label>
+                      <div class="field-hint">Highest level of education completed</div>
+                      <select id="person_education" name="person_education" required aria-required="true">
+                        <option value="" disabled selected>Select education</option>
+                        <option value="High School">High School</option>
+                        <option value="Associate">Associate</option>
+                        <option value="Bachelor">Bachelor</option>
+                        <option value="Master">Master</option>
+                        <option value="Doctorate">Doctorate</option>
+                      </select>
+                      <div class="field-error" id="err-person_education">Please select your education level.</div>
+                    </div>
+                    <div class="form-group">
+                      <label for="person_home_ownership">Home Ownership <span class="required" aria-label="required">*</span></label>
+                      <div class="field-hint">Your current housing situation</div>
+                      <select id="person_home_ownership" name="person_home_ownership" required aria-required="true">
+                        <option value="" disabled selected>Select status</option>
+                        <option value="RENT">Rent</option>
+                        <option value="MORTGAGE">Mortgage</option>
+                        <option value="OWN">Own</option>
+                        <option value="OTHER">Other</option>
+                      </select>
+                      <div class="field-error" id="err-person_home_ownership">Please select your home ownership status.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Section 2: Employment & Income -->
+                <div class="form-section">
+                  <div class="form-section-title">
+                    <span class="sec-icon" aria-hidden="true">💼</span>
+                    Employment &amp; Income
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="person_income">Annual Income <span class="required" aria-label="required">*</span></label>
+                      <div class="field-hint">Gross annual income in USD</div>
+                      <input type="number" id="person_income" name="person_income" min="1" step="any" placeholder="e.g. 65000" required aria-required="true" />
+                      <div class="field-error" id="err-person_income">Please enter a valid income greater than 0.</div>
+                    </div>
+                    <div class="form-group">
+                      <label for="person_emp_exp">Employment Experience <span class="required" aria-label="required">*</span></label>
+                      <div class="field-hint">Years of employment experience</div>
+                      <input type="number" id="person_emp_exp" name="person_emp_exp" min="0" step="1" placeholder="e.g. 5" required aria-required="true" />
+                      <div class="field-error" id="err-person_emp_exp">Please enter a valid experience (0 or more).</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Section 3: Loan & Credit Details -->
+                <div class="form-section">
+                  <div class="form-section-title">
+                    <span class="sec-icon" aria-hidden="true">🏦</span>
+                    Loan &amp; Credit Details
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="loan_amnt">Loan Amount <span class="required" aria-label="required">*</span></label>
+                      <div class="field-hint">Requested loan amount in USD</div>
+                      <input type="number" id="loan_amnt" name="loan_amnt" min="1" step="any" placeholder="e.g. 10000" required aria-required="true" />
+                      <div class="field-error" id="err-loan_amnt">Please enter a valid loan amount greater than 0.</div>
+                    </div>
+                    <div class="form-group">
+                      <label for="loan_intent">Loan Purpose <span class="required" aria-label="required">*</span></label>
+                      <div class="field-hint">Primary purpose for the loan</div>
+                      <select id="loan_intent" name="loan_intent" required aria-required="true">
+                        <option value="" disabled selected>Select purpose</option>
+                        <option value="EDUCATION">Education</option>
+                        <option value="MEDICAL">Medical</option>
+                        <option value="VENTURE">Business Venture</option>
+                        <option value="PERSONAL">Personal</option>
+                        <option value="DEBTCONSOLIDATION">Debt Consolidation</option>
+                        <option value="HOMEIMPROVEMENT">Home Improvement</option>
+                      </select>
+                      <div class="field-error" id="err-loan_intent">Please select a loan purpose.</div>
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="loan_int_rate">Interest Rate (%) <span class="required" aria-label="required">*</span></label>
+                      <div class="field-hint">Expected annual rate, 0.01–40%</div>
+                      <input type="number" id="loan_int_rate" name="loan_int_rate" min="0.01" max="40" step="0.01" placeholder="e.g. 11.5" required aria-required="true" />
+                      <div class="field-error" id="err-loan_int_rate">Please enter a valid rate (0.01–40%).</div>
+                    </div>
+                    <div class="form-group">
+                      <label for="cb_person_cred_hist_length">Credit History Length <span class="required" aria-label="required">*</span></label>
+                      <div class="field-hint">Years of credit history</div>
+                      <input type="number" id="cb_person_cred_hist_length" name="cb_person_cred_hist_length" min="0" step="1" placeholder="e.g. 5" required aria-required="true" />
+                      <div class="field-error" id="err-cb_person_cred_hist_length">Please enter a valid credit history length.</div>
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="credit_score">Credit Score <span class="required" aria-label="required">*</span></label>
+                      <div class="field-hint">FICO score between 300 and 850</div>
+                      <input type="number" id="credit_score" name="credit_score" min="300" max="850" step="1" placeholder="e.g. 650" required aria-required="true" />
+                      <div class="field-error" id="err-credit_score">Please enter a valid credit score (300–850).</div>
+                    </div>
+                    <div class="form-group">
+                      <label for="previous_loan_defaults_on_file">Previous Loan Defaults <span class="required" aria-label="required">*</span></label>
+                      <div class="field-hint">Any previous defaults on record?</div>
+                      <select id="previous_loan_defaults_on_file" name="previous_loan_defaults_on_file" required aria-required="true">
+                        <option value="" disabled selected>Select option</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                      </select>
+                      <div class="field-error" id="err-previous_loan_defaults_on_file">Please select an option.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="form-actions">
+                  <button type="button" class="btn btn-outline" onclick="showScreen('home')">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    Back to Home
+                  </button>
+                  <button type="submit" class="btn btn-gold btn-lg" id="submitBtn">
+                    Predict Eligibility
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h12M12 5l7 7-7 7"/></svg>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div><!-- end screen-application -->
+
+    <!-- ==========================================================
+         SCREEN 3: RESULTS
+         ========================================================== -->
+    <div class="screen" id="screen-results">
+      <div class="results-screen">
+        <div class="container">
+
+          <div class="results-header">
+            <div class="section-label" style="color: var(--gold-400);">Prediction Complete</div>
+            <h2>Your Eligibility Results</h2>
+            <p>Based on the information you provided, here is your estimated prediction.</p>
+          </div>
+
+          <div class="results-wrapper">
+            <div class="results-card">
+
+              <!-- Gauge -->
+              <div class="gauge-container" role="img" aria-label="Probability gauge">
+                <svg class="gauge-svg" viewBox="0 0 200 200">
+                  <circle class="gauge-bg" cx="100" cy="100" r="85" />
+                  <circle class="gauge-fill" id="gaugeFill" cx="100" cy="100" r="85"
+                          stroke-dasharray="534.07"
+                          stroke-dashoffset="534.07" />
+                </svg>
+                <div class="gauge-value">
+                  <div class="gauge-percent" id="gaugePercent">0<span class="gauge-percent-sign">%</span></div>
+                  <div class="gauge-label">Model Estimate</div>
+                </div>
+              </div>
+
+              <!-- Status -->
+              <div id="resultStatus"></div>
+
+              <!-- Message -->
+              <p class="result-message" id="resultMessage"></p>
+
+              <!-- Disclaimer -->
+              <div class="result-disclaimer">
+                <strong>⚠️ Important:</strong> This prediction is an estimate generated by a
+                machine learning model trained on historical data. It does not constitute a
+                credit decision, financial advice, or a guarantee of approval by any lender.
+                The displayed probability reflects the model's confidence, not a calibrated
+                real-world approval rate. Always consult a qualified financial advisor
+                before making borrowing decisions.
+              </div>
+
+              <!-- Actions -->
+              <div class="result-actions">
+                <button class="btn btn-gold" onclick="showScreen('application')">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 4v6a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2H3a2 2 0 00-2-2z"/><path d="M1 4a2 2 0 012-2h10l4 4"/></svg>
+                  Try Again
+                </button>
+                <button class="btn btn-outline" onclick="showScreen('home')">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12l2-2m0 0l7-7 4 4-7 7m-4-4l-2 2m9-9l3-3"/></svg>
+                  Back to Home
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div><!-- end screen-results -->
+
+  </main>
+
+  <!-- ============================================================
+       FOOTER
+       ============================================================ -->
+  <footer class="footer" id="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <div class="navbar-logo">
+            <span class="logo-icon" aria-hidden="true">LW</span>
+            LoanWise
+          </div>
+          <p>An ML-powered educational tool that helps you understand your estimated loan eligibility based on key financial factors.</p>
+        </div>
+        <div class="footer-links">
+          <h4>Navigation</h4>
+          <a href="#" onclick="showScreen('home'); return false;">Home</a>
+          <a href="#" onclick="scrollToSection('how-it-works'); return false;">How It Works</a>
+          <a href="#" onclick="scrollToSection('benefits'); return false;">Benefits</a>
+          <a href="#" onclick="showScreen('application'); return false;">Apply Now</a>
+        </div>
+        <div class="footer-links">
+          <h4>Resources</h4>
+          <a href="#" onclick="scrollToSection('why-matters'); return false;">Eligibility Factors</a>
+          <a href="#" onclick="scrollToSection('tips'); return false;">Borrowing Tips</a>
+          <a href="#" onclick="scrollToSection('quotes'); return false;">Financial Wisdom</a>
+        </div>
+      </div>
+      <div class="footer-disclaimer">
+        <strong>Disclaimer:</strong> LoanWise is an educational and informational tool only.
+        It is not a lender, financial institution, or credit bureau. Predictions are generated
+        by a machine learning model and are estimates — not guarantees of loan approval or
+        rejection. This tool does not access your actual credit file or submit applications
+        on your behalf. Always seek professional financial counsel before making credit or
+        borrowing decisions.
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 LoanWise. Educational tool &mdash; not a financial service.</span>
+        <span>Built with FastAPI &amp; Machine Learning</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================================================
+       JAVASCRIPT
+       ============================================================ -->
+  <script>
+    /* =============================================================
+       SCREEN NAVIGATION
+       ============================================================= */
+    const screens = document.querySelectorAll('.screen');
+
+    function showScreen(id) {
+      // Close mobile menu if open
+      document.getElementById('navLinks').classList.remove('open');
+      document.getElementById('hamburger').setAttribute('aria-expanded', 'false');
+
+      screens.forEach(s => {
+        s.classList.remove('active', 'fade-in');
+      });
+
+      const target = document.getElementById('screen-' + id);
+      if (target) {
+        target.classList.add('active', 'fade-in');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      // Show/hide footer based on screen
+      const footer = document.getElementById('footer');
+      footer.style.display = id === 'home' ? 'block' : 'none';
+    }
+
+    function scrollToSection(sectionId) {
+      // Make sure home screen is active first
+      const homeScreen = document.getElementById('screen-home');
+      if (!homeScreen.classList.contains('active')) {
+        showScreen('home');
+        // Wait for screen transition then scroll
+        setTimeout(() => {
+          const el = document.getElementById(sectionId);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      } else {
+        const el = document.getElementById(sectionId);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      // Close mobile menu
+      document.getElementById('navLinks').classList.remove('open');
+      document.getElementById('hamburger').setAttribute('aria-expanded', 'false');
+    }
+
+    /* =============================================================
+       NAVBAR SCROLL EFFECT
+       ============================================================= */
+    window.addEventListener('scroll', () => {
+      const navbar = document.getElementById('navbar');
+      navbar.classList.toggle('scrolled', window.scrollY > 40);
+    });
+
+    /* =============================================================
+       HAMBURGER MENU
+       ============================================================= */
+    document.getElementById('hamburger').addEventListener('click', function () {
+      const links = document.getElementById('navLinks');
+      const isOpen = links.classList.toggle('open');
+      this.setAttribute('aria-expanded', isOpen);
+    });
+
+    /* =============================================================
+       FORM VALIDATION
+       ============================================================= */
+    const FIELD_RULES = {
+      person_age:           { type: 'number', min: 18,   max: 100 },
+      person_gender:        { type: 'select' },
+      person_education:     { type: 'select' },
+      person_income:        { type: 'number', min: 0.01 },
+      person_emp_exp:       { type: 'number', min: 0 },
+      person_home_ownership:{ type: 'select' },
+      loan_amnt:            { type: 'number', min: 0.01 },
+      loan_intent:          { type: 'select' },
+      loan_int_rate:        { type: 'number', min: 0.01, max: 40 },
+      cb_person_cred_hist_length: { type: 'number', min: 0 },
+      credit_score:         { type: 'number', min: 300,  max: 850 },
+      previous_loan_defaults_on_file: { type: 'select' }
+    };
+
+    function validateField(name) {
+      const el = document.getElementById(name);
+      const errEl = document.getElementById('err-' + name);
+      const rule = FIELD_RULES[name];
+      let valid = true;
+
+      if (rule.type === 'select') {
+        valid = el.value !== '';
+      } else {
+        const val = parseFloat(el.value);
+        if (isNaN(val)) { valid = false; }
+        else {
+          if (rule.min !== undefined && val < rule.min) valid = false;
+          if (rule.max !== undefined && val > rule.max) valid = false;
+        }
+      }
+
+      el.classList.toggle('error', !valid);
+      if (errEl) errEl.classList.toggle('visible', !valid);
+      return valid;
+    }
+
+    function validateForm() {
+      let allValid = true;
+      for (const name of Object.keys(FIELD_RULES)) {
+        if (!validateField(name)) allValid = false;
+      }
+
+      // Cross-field: experience must not exceed age
+      const age = parseFloat(document.getElementById('person_age').value);
+      const exp = parseFloat(document.getElementById('person_emp_exp').value);
+      if (!isNaN(age) && !isNaN(exp) && exp > age) {
+        allValid = false;
+        const errEl = document.getElementById('err-person_emp_exp');
+        const el = document.getElementById('person_emp_exp');
+        el.classList.add('error');
+        if (errEl) {
+          errEl.textContent = 'Experience cannot exceed your age.';
+          errEl.classList.add('visible');
+        }
+      }
+
+      return allValid;
+    }
+
+    // Real-time validation on blur
+    Object.keys(FIELD_RULES).forEach(name => {
+      const el = document.getElementById(name);
+      if (el) {
+        el.addEventListener('blur', () => validateField(name));
+        el.addEventListener('input', () => {
+          // Clear error on input
+          el.classList.remove('error');
+          const errEl = document.getElementById('err-' + name);
+          if (errEl) errEl.classList.remove('visible');
+        });
+      }
+    });
+
+    /* =============================================================
+       FORM SUBMISSION
+       ============================================================= */
+    document.getElementById('loanForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      if (!validateForm()) {
+        // Scroll to first error
+        const firstErr = document.querySelector('.form-group input.error, .form-group select.error');
+        if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      // Gather data — convert numeric fields to numbers
+      const payload = {};
+      for (const name of Object.keys(FIELD_RULES)) {
+        const el = document.getElementById(name);
+        if (FIELD_RULES[name].type === 'number') {
+          payload[name] = parseFloat(el.value);
+        } else {
+          payload[name] = el.value;
+        }
+      }
+
+      // Show loading
+      document.getElementById('loadingOverlay').classList.add('active');
+
+      try {
+        const response = await fetch('/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => null);
+          let message = 'An unexpected error occurred. Please check your inputs and try again.';
+
+          if (errData) {
+            if (typeof errData.detail === 'string') {
+              message = errData.detail;
+            } else if (Array.isArray(errData.detail)) {
+              // Pydantic validation errors
+              message = errData.detail
+                .map(e => {
+                  const field = e.loc ? e.loc[e.loc.length - 1] : 'Unknown field';
+                  return `${field}: ${e.msg}`;
+                })
+                .join('\n');
+            }
+          }
+
+          throw new Error(message);
+        }
+
+        const result = await response.json();
+        document.getElementById('loadingOverlay').classList.remove('active');
+        renderResult(result);
+        showScreen('results');
+
+      } catch (err) {
+        document.getElementById('loadingOverlay').classList.remove('active');
+        showError(err.message || 'Failed to connect to the server. Please ensure the backend is running.');
+      }
+    });
+
+    /* =============================================================
+       RENDER RESULT
+       ============================================================= */
+    function renderResult(data) {
+      const approved = data.approved;
+      const probability = data.probability;
+
+      // Status badge
+      const statusEl = document.getElementById('resultStatus');
+      if (approved) {
+        statusEl.innerHTML = '<div class="result-status approved"><span class="status-icon">✅</span> Likely Eligible</div>';
+      } else {
+        statusEl.innerHTML = '<div class="result-status rejected"><span class="status-icon">❌</span> Likely Not Eligible</div>';
+      }
+
+      // Message
+      const msgEl = document.getElementById('resultMessage');
+      if (approved) {
+        msgEl.textContent = `Based on the information provided, our model estimates a ${probability}% likelihood of approval. This is a positive indicator, but actual approval depends on the lender's specific criteria.`;
+      } else {
+        msgEl.textContent = `Based on the information provided, our model estimates a ${probability}% likelihood of approval. Consider reviewing the factors that affect eligibility and exploring ways to strengthen your profile.`;
+      }
+
+      // Animate gauge
+      animateGauge(probability, approved);
+    }
+
+    /* =============================================================
+       GAUGE ANIMATION
+       ============================================================= */
+    function animateGauge(probability, approved) {
+      const fillEl = document.getElementById('gaugeFill');
+      const percentEl = document.getElementById('gaugePercent');
+      const circumference = 2 * Math.PI * 85; // ~534.07
+
+      // Color
+      const color = approved ? 'var(--success-500)' : 'var(--danger-500)';
+      fillEl.style.stroke = color;
+
+      // Reset
+      fillEl.style.transition = 'none';
+      fillEl.style.strokeDashoffset = circumference;
+      percentEl.innerHTML = '0<span class="gauge-percent-sign">%</span>';
+
+      // Trigger reflow then animate
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          fillEl.style.transition = 'stroke-dashoffset 1.5s cubic-bezier(.4,0,.2,1)';
+          const offset = circumference - (circumference * probability / 100);
+          fillEl.style.strokeDashoffset = offset;
+
+          // Count up the number
+          const duration = 1500;
+          const start = performance.now();
+          function tick(now) {
+            const elapsed = now - start;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+            const current = Math.round(eased * probability * 10) / 10;
+            percentEl.innerHTML = current.toFixed(1) + '<span class="gauge-percent-sign">%</span>';
+            if (progress < 1) requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
+        });
+      });
+    }
+
+    /* =============================================================
+       ERROR HANDLING
+       ============================================================= */
+    let errorTimeout;
+
+    function showError(message) {
+      const toast = document.getElementById('errorToast');
+      document.getElementById('errorMessage').textContent = message;
+      toast.classList.add('visible');
+      clearTimeout(errorTimeout);
+      errorTimeout = setTimeout(hideError, 8000);
+    }
+
+    function hideError() {
+      document.getElementById('errorToast').classList.remove('visible');
+      clearTimeout(errorTimeout);
+    }
+
+    /* =============================================================
+       INIT
+       ============================================================= */
+    // Trigger navbar scroll check on load
+    window.dispatchEvent(new Event('scroll'));
+  </script>
+</body>
+</html>
